@@ -1,0 +1,263 @@
+================================================================================
+BEARDOWN-TP LAB - STUDENT GUIDE
+How to Complete This Lab (Simple Steps)
+================================================================================
+
+YOUR GOAL:
+Implement a networking protocol that can send data reliably even when:
+- Packets get lost
+- Packets get corrupted (bits flip)
+- Packets get duplicated
+- Packets are delayed
+
+================================================================================
+STEP-BY-STEP WORKFLOW
+================================================================================
+
+STEP 1: UNDERSTAND WHAT YOU'RE BUILDING
+───────────────────────────────────────────────────────────────────────────
+
+You're building a SENDER and RECEIVER for reliable data transfer.
+
+Think of it like email:
+  - SENDER: Takes your message, breaks it into packets, sends them
+  - RECEIVER: Gets packets, validates them, sends back "I got it!" (ACK)
+  - Network: Might lose packets, corrupt them, etc.
+
+Files you need to understand:
+  - protocol.py (ALREADY COMPLETE - do touch it)
+    Contains: utilities for creating packets, calculating checksums, etc.
+  
+  - TestHarness.py (ALREADY COMPLETE - do touch it)
+    Tests your code automatically
+
+
+STEP 2: READ THE SKELETON FILES
+───────────────────────────────────────────────────────────────────────────
+
+Open these files in any text editor:
+  - beardown_sender.py
+  - beardown_receiver.py
+
+You'll see:
+  - Methods marked with "TODO" - these are what you implement
+  - Comments explaining what each method should do
+  - Helper method hints
+
+READ ALL THE COMMENTS - they explain the logic you need!
+
+
+STEP 3: IMPLEMENT THE SENDER (beardown_sender.py)
+───────────────────────────────────────────────────────────────────────────
+
+You need to fill in 5 methods:
+
+1. load_data(data)
+   What: Load data to send
+   How: Store in self.data_buffer, set offset to 0
+   Why: Prepare for transmission
+
+2. get_next_packet()
+   What: Create and send packets
+   How: Check timeout, extract data, create packet, track send time
+   Why: Main sending logic - most important!
+
+3. process_ack(ack_packet)
+   What: Handle acknowledgments from receiver
+   How: Validate, parse, check if it's for our packet, advance if yes
+   Why: Know when packet was received successfully
+
+4. handle_timeout()
+   What: Resend packet if no ACK received
+   How: Increase timeout, reset send time, record stats
+   Why: Recover from lost packets
+
+5. is_complete()
+   What: Check if transfer is done
+   How: Check if offset >= total_size AND not waiting for ACK
+   Why: Know when to stop sending
+
+Plus 3 helper methods (easier):
+  - _extract_data_segment() - Get next 1000 bytes
+  - _create_data_packet() - Make packet with checksum
+  - _should_retransmit() - Check if timeout happened
+
+
+STEP 4: IMPLEMENT THE RECEIVER (beardown_receiver.py)
+───────────────────────────────────────────────────────────────────────────
+
+You need to fill in 1 main method and 5 helpers:
+
+Main method:
+  1. process_packet(packet)
+     What: Receive packet, validate, send ACK
+     How: Check valid, check duplicate, buffer data, send ACK
+     Why: Main receiving logic
+
+Helper methods (all easier):
+  2. _validate_packet() - Check if packet is good (1 line)
+  3. _parse_packet() - Extract packet parts (1 line)
+  4. _is_duplicate() - Is this a duplicate? (3 lines)
+  5. _create_ack_packet() - Make ACK (1 line)
+  6. _buffer_data() - Store data (1 line)
+
+
+STEP 5: TEST YOUR CODE
+───────────────────────────────────────────────────────────────────────────
+
+DO NOT run beardown_sender.py or beardown_receiver.py directly!
+
+Instead, run ONLY this:
+
+  $ python3 TestHarness.py
+
+That's it! TestHarness will:
+  1. Import your sender and receiver
+  2. Run 6 automatic tests
+  3. Show your score
+
+Output looks like:
+  Running: Basic Test (2 pts)... [PASS]
+  Running: Random Drops (2 pts)... [FAIL]
+  ...
+  FINAL SCORE: 4/10 points
+
+
+STEP 6: DEBUG AND FIX
+───────────────────────────────────────────────────────────────────────────
+
+If tests fail:
+
+1. Read the error message - it tells you what's wrong
+
+2. Add print statements:
+   def get_next_packet(self):
+       print(f"DEBUG: offset={self.current_offset}, pending={self.pending_ack}")
+       ...
+
+3. Run TestHarness again to see debug output
+
+4. Fix the issue
+
+5. Repeat until score = 10/10
+
+
+STEP 7: SUBMIT
+───────────────────────────────────────────────────────────────────────────
+
+When you get 10/10:
+  Submit these files:
+    - beardown_sender.py (your implementation)
+    - beardown_receiver.py (your implementation)
+    - README.md (explain what you did)
+
+================================================================================
+QUICK REFERENCE: What Each File Does
+================================================================================
+
+protocol.py (COMPLETE - READ ONLY)
+  - Provides: PacketStructure, InternetChecksum, TimeoutManager, etc.
+  - You: Import and USE it
+  - Don't: Modify it
+  - Run: No (use it inside your code)
+
+TestHarness.py (COMPLETE - READ ONLY)
+  - Provides: Automated grading with 6 tests
+  - You: Run it to test your code
+  - Don't: Modify it
+  - Run: YES! "python3 TestHarness.py"
+
+beardown_sender.py (INCOMPLETE - YOU FILL IT IN)
+  - Provides: Empty skeleton with TODOs
+  - You: Implement all TODO methods
+  - Don't: Add new methods or delete existing ones
+  - Run: NO! Only TestHarness runs it
+
+beardown_receiver.py (INCOMPLETE - YOU FILL IT IN)
+  - Provides: Empty skeleton with TODOs
+  - You: Implement all TODO methods
+  - Don't: Add new methods or delete existing ones
+  - Run: NO! Only TestHarness runs it
+
+================================================================================
+KEY POINTS TO REMEMBER
+================================================================================
+
+1. You ONLY run: python3 TestHarness.py
+   
+   Don't run:
+   - python3 beardown_sender.py
+   - python3 beardown_receiver.py
+   - python3 protocol.py (unless testing it individually)
+
+2. TestHarness automatically:
+   - Imports your sender and receiver
+   - Runs 6 tests
+   - Shows if tests pass or fail
+   - Calculates your score
+
+3. The goal:
+   - Get 10/10 points = All tests pass = Lab complete
+
+4. If stuck:
+   - Read the method comments (they explain the logic)
+   - Add print statements to debug
+   - Read CRITICAL_ACK_REFERENCE.md (important for understanding ACKs)
+   - Check README.md for help
+
+================================================================================
+EXAMPLE: Complete Workflow
+================================================================================
+
+1. Open beardown_sender.py
+   - Read the TODO comments
+   - Implement load_data() method
+   
+2. Open beardown_receiver.py
+   - Read the TODO comments
+   - Implement process_packet() method
+
+3. Run: python3 TestHarness.py
+   - See result: 0/10 points (because incomplete)
+
+4. Go back and implement more methods
+
+5. Run: python3 TestHarness.py
+   - See result: 2/10 points (BasicTest passes!)
+
+6. Keep implementing until all 5 tests pass
+
+7. Final run: python3 TestHarness.py
+   - See result: 10/10 points (Success!)
+
+8. Submit files
+
+================================================================================
+WHAT YOU LEARN
+================================================================================
+
+By implementing this lab, you learn:
+
+✓ How packets are created and validated
+✓ How checksums detect corrupted data
+✓ How sequence numbers prevent duplicates
+✓ How timeouts and retransmission handle lost packets
+✓ How acknowledgments confirm delivery
+✓ How real networking protocols work (this is similar to TCP!)
+
+================================================================================
+FINAL CHECKLIST
+================================================================================
+
+Before submitting:
+  □ Run TestHarness.py
+  □ Get 10/10 points
+  □ All 6 tests pass
+  □ No error messages
+  □ Write README.md explaining your design
+  □ Submit both .py files and README.md
+
+Good luck! This is challenging but very rewarding. You are learning
+fundamental concepts that power the entire internet!
+
+================================================================================
