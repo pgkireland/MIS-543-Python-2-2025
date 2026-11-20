@@ -25,15 +25,20 @@ Think of it like email:
   - Network: Might lose packets, corrupt them, etc.
 
 Files you need to understand:
-  - protocol.py (ALREADY COMPLETE - do touch it)
+  - protocol.py (ALREADY COMPLETE - do not touch it)
     Contains: utilities for creating packets, calculating checksums, etc.
   
-  - TestHarness.py (ALREADY COMPLETE - do touch it)
+  - TestHarness.py (ALREADY COMPLETE - do not touch it)
     Tests your code automatically
 
 
 STEP 2: READ THE SKELETON FILES
 ───────────────────────────────────────────────────────────────────────────
+
+First rename the two skeleton files:
+  - beardown_sender_student.py   ->  beardown_sender.py
+  - beardown_receiver_student.py ->  beardown_receiver.py
+TestHarness.py only looks for the renamed files.
 
 Open these files in any text editor:
   - beardown_sender.py
@@ -149,7 +154,7 @@ When you get 10/10:
   Submit these files:
     - beardown_sender.py (your implementation)
     - beardown_receiver.py (your implementation)
-    - README.md (explain what you did)
+    - Your Part 2 answers document (the 10 questions)
 
 ================================================================================
 QUICK REFERENCE: What Each File Does
@@ -202,8 +207,7 @@ KEY POINTS TO REMEMBER
 4. If stuck:
    - Read the method comments (they explain the logic)
    - Add print statements to debug
-   - Read CRITICAL_ACK_REFERENCE.md (important for understanding ACKs)
-   - Check README.md for help
+   - Read HOW THE TEST WORKS.docx
 
 ================================================================================
 EXAMPLE: Complete Workflow
@@ -225,7 +229,7 @@ EXAMPLE: Complete Workflow
 5. Run: python3 TestHarness.py
    - See result: 2/10 points (BasicTest passes!)
 
-6. Keep implementing until all 5 tests pass
+6. Keep implementing until all 6 tests pass
 
 7. Final run: python3 TestHarness.py
    - See result: 10/10 points (Success!)
@@ -254,8 +258,8 @@ Before submitting:
   □ Get 10/10 points
   □ All 6 tests pass
   □ No error messages
-  □ Write README.md explaining your design
-  □ Submit both .py files and README.md
+  □ Answer the 10 questions in Part 2
+  □ Submit both .py files and your Part 2 answers
 
 Good luck! This is challenging but very rewarding. You are learning
 fundamental concepts that power the entire internet!
