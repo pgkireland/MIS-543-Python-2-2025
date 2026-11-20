@@ -79,6 +79,39 @@ class NetworkSimulator:
         }
 
 
+class SenderWait:
+    """
+    Decides what to do when get_next_packet() returns None before the
+    transfer is complete. In stop-and-wait, None means "still waiting
+    for an ACK", so the harness waits for the sender's own timeout to
+    fire instead of ending the transfer. It gives up if the sender has
+    never sent anything, or if no packet appears within a little more
+    than twice the sender's current timeout.
+    """
+
+    def __init__(self):
+        self.sent_any = False
+        self.idle_since = None
+
+    def packet_sent(self):
+        self.sent_any = True
+        self.idle_since = None
+
+    def should_stop(self, sender) -> bool:
+        if not self.sent_any:
+            return True
+        now = time.time()
+        if self.idle_since is None:
+            self.idle_since = now
+        try:
+            limit = min(35.0, 2 * sender.timeout_manager.get_timeout() + 1.0)
+        except Exception:
+            limit = 5.0
+        if now - self.idle_since > limit:
+            return True
+        time.sleep(0.005)
+        return False
+
 class ProtocolTester(ABC):
     """Base class for protocol tests"""
     
@@ -128,6 +161,7 @@ class BasicTest(ProtocolTester):
             # Test 1: Send small message (100 bytes)
             test_data = b"A" * 100
             sender.load_data(test_data)
+            wait = SenderWait()
             
             # Simulate one transfer
             packets_transferred = 0
@@ -138,7 +172,10 @@ class BasicTest(ProtocolTester):
                 # Get packet from sender
                 packet = sender.get_next_packet()
                 if packet is None:
-                    break
+                    if wait.should_stop(sender):
+                        break
+                    continue
+                wait.packet_sent()
                 
                 # Process through network
                 received_packet = network.process_packet(packet)
@@ -192,6 +229,7 @@ class BasicSpeedTest(ProtocolTester):
             # Send 100KB of data
             test_data = bytes([i % 256 for i in range(100 * 1024)])
             sender.load_data(test_data)
+            wait = SenderWait()
             
             start_transfer = time.time()
             max_iterations = 1000
@@ -200,7 +238,10 @@ class BasicSpeedTest(ProtocolTester):
             while not sender.is_complete() and iterations < max_iterations:
                 packet = sender.get_next_packet()
                 if packet is None:
-                    break
+                    if wait.should_stop(sender):
+                        break
+                    continue
+                wait.packet_sent()
                 
                 received_packet = network.process_packet(packet)
                 if received_packet is None:
@@ -261,6 +302,7 @@ class RandomDropTest(ProtocolTester):
             
             test_data = b"Test data with loss: " * 100
             sender.load_data(test_data)
+            wait = SenderWait()
             
             max_iterations = 2000
             iterations = 0
@@ -268,7 +310,10 @@ class RandomDropTest(ProtocolTester):
             while not sender.is_complete() and iterations < max_iterations:
                 packet = sender.get_next_packet()
                 if packet is None:
-                    break
+                    if wait.should_stop(sender):
+                        break
+                    continue
+                wait.packet_sent()
                 
                 received_packet = network.process_packet(packet)
                 if received_packet is None:
@@ -318,6 +363,7 @@ class CorruptionTest(ProtocolTester):
             
             test_data = b"Testing corruption detection mechanism: " * 50
             sender.load_data(test_data)
+            wait = SenderWait()
             
             max_iterations = 2000
             iterations = 0
@@ -325,7 +371,10 @@ class CorruptionTest(ProtocolTester):
             while not sender.is_complete() and iterations < max_iterations:
                 packet = sender.get_next_packet()
                 if packet is None:
-                    break
+                    if wait.should_stop(sender):
+                        break
+                    continue
+                wait.packet_sent()
                 
                 received_packet = network.process_packet(packet)
                 if received_packet is None:
@@ -375,6 +424,7 @@ class DuplicationTest(ProtocolTester):
             
             test_data = b"Deduplication test payload data: " * 40
             sender.load_data(test_data)
+            wait = SenderWait()
             
             max_iterations = 2000
             iterations = 0
@@ -382,7 +432,10 @@ class DuplicationTest(ProtocolTester):
             while not sender.is_complete() and iterations < max_iterations:
                 packet = sender.get_next_packet()
                 if packet is None:
-                    break
+                    if wait.should_stop(sender):
+                        break
+                    continue
+                wait.packet_sent()
                 
                 received_packet = network.process_packet(packet)
                 if received_packet is None:
@@ -436,6 +489,7 @@ class DelayTest(ProtocolTester):
             
             test_data = b"Delay test with up to 500ms latency: " * 30
             sender.load_data(test_data)
+            wait = SenderWait()
             
             max_iterations = 1500
             iterations = 0
@@ -443,7 +497,10 @@ class DelayTest(ProtocolTester):
             while not sender.is_complete() and iterations < max_iterations:
                 packet = sender.get_next_packet()
                 if packet is None:
-                    break
+                    if wait.should_stop(sender):
+                        break
+                    continue
+                wait.packet_sent()
                 
                 received_packet = network.process_packet(packet)
                 if received_packet is None:
@@ -458,7 +515,7 @@ class DelayTest(ProtocolTester):
             received_data = receiver.get_received_data()
             if received_data == test_data:
                 self.passed = True
-                self.message = f"Successfully handled delays. Transfer completed in {self.end_time - self.start_time:.2f}s"
+                self.message = f"Successfully handled delays. Transfer completed in {time.time() - self.start_time:.2f}s"
             else:
                 self.message = "Transfer failed with delays"
                 self.passed = False
@@ -502,7 +559,7 @@ class GradingScript:
             print(f"[{status}]")
             print(f"  Message: {result['message']}")
             print(f"  Duration: {result['duration']:.2f}s")
-            print(f"  Score: {result['points']}/{result['points']}")
+            print(f"  Score: {result['points']}/{test.points}")
             print()
             
             self.earned_points += result['points']
